@@ -193,14 +193,13 @@ function recordReplayData() {
         }
         for (var player in positions.players) {
             for (var prop in positions.players[player]) {
-                // Only apply to properties tracked over time.
-                if ($.isArray(positions[player][prop])) {
-                    var frames = positions[player][prop];
-                    var playerId = player.replace('player', '');
-
+                // Only apply to properties tracked each frame
+                if (positions.players[player][prop].length == saveDuration * fps) {
+                    var frames = positions.players[player][prop];
+                    
                     frames.shift();
-                    if (typeof tagpro.players[playerId] !== 'undefined') {
-                        frames.push(tagpro.players[playerId][prop]);
+                    if (typeof tagpro.players[player] !== 'undefined') {
+                        frames.push(tagpro.players[player][prop]);
                     } else {
                         frames.push(null);
                     }
