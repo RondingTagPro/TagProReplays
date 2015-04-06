@@ -71,16 +71,13 @@ function getOptions() {
     var record_key_enabled = getBooleanCookie('useRecordKey', true);
     var record_key = +readCookie('replayRecordKey') || 47;
     var record = getBooleanCookie('record', true);
-    // What is this for?
-    var treter = getBooleanCookie('treter', false);
 
     var options = {
         fps: fps,
         duration: duration,
         record_key_enabled: record_key_enabled,
         record_key: record_key,
-        record: record,
-        treter: treter
+        record: record
     };
     return options;
 }
@@ -94,17 +91,22 @@ function recordReplayData() {
     var saveDuration = options.duration;
 
     // set up map data
-    positions.chat = [];
-    positions.splats = [];
     positions.bombs = [];
-    positions.spawns = [];
-    positions.map = tagpro.map;
-    delete positions.map.splats;
-    positions.wallMap = tagpro.wallMap;
+    positions.camera = createZeroArray(saveDuration * fps);
+    positions.chat = [];
+    positions.displayTime = createZeroArray(saveDuration * fps);
     positions.floorTiles = [];
+    positions.map = tagpro.map;
+    positions.players = {};
     positions.score = createZeroArray(saveDuration * fps);
-    positions.gameEndsAt = [new Date(tagpro.gameEndsAt).getTime()];
-    positions.clock = createZeroArray(saveDuration * fps);
+    positions.spawns = [];
+    positions.splats = [];
+    positions.time = createZeroArray(saveDuration * fps);
+    positions.wallMap = tagpro.wallMap;    
+
+    delete positions.map.splats;
+    
+    // AM I LEAVING THIS HERE AND ONLY SAVING TILES OR MOVING THIS TO THE MAP DRAW FUNCTIONS?
     decipheredData = decipherMapdata(positions.map, mapElements);
     positions.tiles = translateWallTiles(decipheredData, positions.wallMap, quadrantCoords);
 
@@ -119,8 +121,13 @@ function recordReplayData() {
 
     // set up listener for chats, splats, and bombs
     tagpro.socket.on('chat', function (CHAT) {
-        CHAT.removeAt = Date.now()+30000;
-        positions.chat.push(CHAT);
+        var CHATOBJ = {
+            from: CHAT.from,
+            time: Date.now(),
+            to: CHAT.to,
+            message: CHAT.message
+        }
+        positions.chat.push(CHATOBJ);
     });
 
     tagpro.socket.on('splat', function (SPLAT) {
