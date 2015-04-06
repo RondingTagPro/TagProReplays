@@ -126,75 +126,83 @@ function recordReplayData() {
             time: Date.now(),
             to: CHAT.to,
             message: CHAT.message
-        }
+        };
         positions.chat.push(CHATOBJ);
     });
 
     tagpro.socket.on('splat', function (SPLAT) {
-        SPLAT.time = new Date();
-        positions.splats.push(SPLAT);
+        var SPLATOBJ = {
+            team: SPLAT.t,
+            x: SPLAT.x,
+            y: SPLAT.y,
+            time: Date.now()
+        };
+        positions.splats.push(SPLATOBJ);
     });
 
     tagpro.socket.on('bomb', function (BOMB) {
-        BOMB.time = new Date();
-        positions.bombs.push(BOMB);
+        var BOMBOBJ = {
+            time: Date.now(),
+            type: BOMB.type,
+            x: BOMB.x,
+            y: BOMB.y
+        };
+        positions.bombs.push(BOMBOBJ);
     });
 
     tagpro.socket.on('spawn', function (SPAWN) {
-        SPAWN.time = new Date();
-        positions.spawns.push(SPAWN);
+        var SPAWNOBJ = {
+            team: SPAWN.t,
+            wait: SPAWN.w,
+            x: SPAWN.x,
+            y: SPAWN.y,
+            time: Date.now()
+        }; 
+        positions.spawns.push(SPAWNOBJ);
     });
 
     tagpro.socket.on('end', function (END) {
-        END.time = new Date();
-        positions.end = END;
-    });
-
-    tagpro.socket.on('time', function (TIME) {
-        TIME.startTime = new Date();
-        positions.gameEndsAt.push(TIME);
+        var ENDOBJ = {
+            time: Date.now(),
+            winner: END.winner
+        }
+        positions.gameEnd = END;
     });
 
     // function to save game data
     saveGameData = function () {
-        currentPlayers = tagpro.players;
-        for (var player in currentPlayers) {
-            if (!positions['player' + player]) {
-                positions['player' + player] = {
-                    x: createZeroArray(saveDuration * fps),
-                    y: createZeroArray(saveDuration * fps),
-                    name: createZeroArray(saveDuration * fps),
-                    fps: fps,
-                    team: createZeroArray(saveDuration * fps), //players[player].team, // 1:red, 2:blue
-                    map: $('#mapInfo').text().replace('Map: ', '').replace(/ by.*/, ''),
-                    flag: createZeroArray(saveDuration * fps),
-                    bomb: createZeroArray(saveDuration * fps),
-                    grip: createZeroArray(saveDuration * fps),
-                    tagpro: createZeroArray(saveDuration * fps),
-                    dead: createZeroArray(saveDuration * fps),
-                    draw: createZeroArray(saveDuration * fps),
-                    me: (+tagpro.playerId == +player ? 'me' : 'other'),
+        for (var player in tagpro.players) {
+            if (!positions.players[player]) {
+                positions.players[player] = {
+                    angle: createZeroArray(saveDuration * fps),
                     auth: createZeroArray(saveDuration * fps),
+                    bomb: createZeroArray(saveDuration * fps),
+                    dead: createZeroArray(saveDuration * fps),
                     degree: createZeroArray(saveDuration * fps),
+                    draw: createZeroArray(saveDuration * fps),
+                    flag: createZeroArray(saveDuration * fps),
                     flair: createZeroArray(saveDuration * fps),
-                    angle: createZeroArray(saveDuration * fps)
+                    grip: createZeroArray(saveDuration * fps),
+                    name: createZeroArray(saveDuration * fps),
+                    tagpro: createZeroArray(saveDuration * fps),
+                    team: createZeroArray(saveDuration * fps), //players[player].team, // 1:red, 2:blue
+                    x: createZeroArray(saveDuration * fps),
+                    y: createZeroArray(saveDuration * fps)
                 };
             }
         }
-        for (var player in positions) {
-            if (player.search('player') === 0) {
-                for (var prop in positions[player]) {
-                    // Only apply to properties tracked over time.
-                    if ($.isArray(positions[player][prop])) {
-                        var frames = positions[player][prop];
-                        var playerId = player.replace('player', '');
+        for (var player in positions.players) {
+            for (var prop in positions.players[player]) {
+                // Only apply to properties tracked over time.
+                if ($.isArray(positions[player][prop])) {
+                    var frames = positions[player][prop];
+                    var playerId = player.replace('player', '');
 
-                        frames.shift();
-                        if (typeof tagpro.players[playerId] !== 'undefined') {
-                            frames.push(tagpro.players[playerId][prop]);
-                        } else {
-                            frames.push(null);
-                        }
+                    frames.shift();
+                    if (typeof tagpro.players[playerId] !== 'undefined') {
+                        frames.push(tagpro.players[playerId][prop]);
+                    } else {
+                        frames.push(null);
                     }
                 }
             }
