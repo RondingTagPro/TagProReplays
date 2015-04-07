@@ -86,11 +86,10 @@ function getOptions() {
 var options = getOptions();
 
 function recordReplayData() {
-    var savingIndex = 0;
     var fps = options.fps;
     var saveDuration = options.duration;
 
-    // set up map data
+    // set up position data object
     positions.bombs = [];
     positions.camera = createZeroArray(saveDuration * fps);
     positions.chat = [];
@@ -102,16 +101,22 @@ function recordReplayData() {
     positions.spawns = [];
     positions.splats = [];
     positions.time = createZeroArray(saveDuration * fps);
-    positions.wallMap = tagpro.wallMap;    
+    positions.wallMap = tagpro.wallMap;
 
+    // ideally we would keep these and add them to the splats object, but there is no team indicator??
     delete positions.map.splats;
+
+    // set up replay info data object
+    replayInfo.
+
+
     
     // AM I LEAVING THIS HERE AND ONLY SAVING TILES OR MOVING THIS TO THE MAP DRAW FUNCTIONS?
     decipheredData = decipherMapdata(positions.map, mapElements);
     positions.tiles = translateWallTiles(decipheredData, positions.wallMap, quadrantCoords);
 
-    for (tilecol in positions.map) {
-        for (tilerow in positions.map[tilecol]) {
+    for (var tilecol in positions.map) {
+        for (var tilerow in positions.map[tilecol]) {
             thisTile = positions.map[tilecol][tilerow];
             if (thisTile >= 3 & thisTile < 7 | thisTile >= 9 & thisTile < 11 | thisTile >= 13 & thisTile < 17) {
                 positions.floorTiles.push({x: tilecol, y: tilerow, value: createZeroArray(saveDuration * fps)});
@@ -165,9 +170,11 @@ function recordReplayData() {
         var ENDOBJ = {
             time: Date.now(),
             winner: END.winner
-        }
+        };
         positions.gameEnd = END;
     });
+
+    // 
 
     // function to save game data
     saveGameData = function () {
@@ -191,15 +198,15 @@ function recordReplayData() {
                 };
             }
         }
-        for (var player in positions.players) {
-            for (var prop in positions.players[player]) {
+        for (var playerId in positions.players) {
+            for (var prop in positions.players[playerId]) {
                 // Only apply to properties tracked each frame
-                if (positions.players[player][prop].length == saveDuration * fps) {
-                    var frames = positions.players[player][prop];
+                if (positions.players[playerId][prop].length == saveDuration * fps) {
+                    var frames = positions.players[playerId][prop];
                     
                     frames.shift();
-                    if (typeof tagpro.players[player] !== 'undefined') {
-                        frames.push(tagpro.players[player][prop]);
+                    if (typeof tagpro.players[playerId] !== 'undefined') {
+                        frames.push(tagpro.players[playerId][prop]);
                     } else {
                         frames.push(null);
                     }
@@ -210,11 +217,15 @@ function recordReplayData() {
             positions.floorTiles[j].value.shift();
             positions.floorTiles[j].value.push(tagpro.map[positions.floorTiles[j].x][positions.floorTiles[j].y]);
         }
-        positions.clock.shift();
-        positions.clock.push(new Date());
+        positions.time.shift();
+        positions.time.push(Date.now());
         positions.score.shift();
         positions.score.push(tagpro.score);
-    }
+        positions.displayTime.shift();
+        positions.displayTime.push(tagpro.gameEndsAt - Date.now());
+        positions.camera.shift();
+        positions.camera.push({x: tagpro.players[tagpro.playerId].x, y: tagpro.players[tagpro.playerId].y});
+    };
 
     thing = setInterval(saveGameData, 1000 / fps);
 }
@@ -243,7 +254,6 @@ function recordReplayData() {
  */
 function decipherMapdata(mapData, mapElements) {
     var result = [];
-    console.log(mapData);
     for (var col in mapData) {
         result.push([]);
         for (var row in mapData[col]) {
@@ -300,14 +310,13 @@ function translateWallTiles(decipheredData, wallData, quadrantCoords) {
 // TL, TR, BR, BL
 var quadrantCoords = {
     "0": [15, 10],
-    0: [15, 10],
     "310": [10.5, 7.5],
     "410": [11, 7.5],
     "110": [11, 8],
     "210": [10.5, 8],
-    "310d": [.5, 3.5],
+    "310d": [0.5, 3.5],
     "410d": [1, 3.5],
-    "210d": [.5, 4],
+    "210d": [0.5, 4],
     321: [4.5, 9.5],
     421: [5, 9.5],
     121: [5, 10],
@@ -322,10 +331,10 @@ var quadrantCoords = {
     "332d": [9.5, 2.5],
     "432d": [10, 2.5],
     "132d": [10, 3],
-    343: [.5, 7.5],
+    343: [0.5, 7.5],
     443: [1, 7.5],
     143: [1, 8],
-    243: [.5, 8],
+    243: [0.5, 8],
     "343d": [10.5, 3.5],
     "443d": [11, 3.5],
     "143d": [11, 4],
@@ -347,9 +356,9 @@ var quadrantCoords = {
     476: [5, 8.5],
     176: [5, 9],
     276: [4.5, 9],
-    "376d": [.5, 1.5],
+    "376d": [0.5, 1.5],
     "176d": [1, 2],
-    "276d": [.5, 2],
+    "276d": [0.5, 2],
     307: [9.5, 6.5],
     407: [10, 6.5],
     107: [10, 7],
@@ -360,20 +369,20 @@ var quadrantCoords = {
     "320": [1.5, 7.5],
     "420": [2, 7.5],
     "220": [1.5, 8],
-    "320d": [10.5, .5],
-    "420d": [11, .5],
+    "320d": [10.5, 0.5],
+    "420d": [11, 0.5],
     "220d": [10.5, 1],
     331: [5.5, 6.5],
     431: [6, 6.5],
     131: [6, 7],
     231: [5.5, 7],
-    "331d": [5.5, .5],
-    "431d": [6, .5],
+    "331d": [5.5, 0.5],
+    "431d": [6, 0.5],
     342: [9.5, 7.5],
     442: [10, 7.5],
     142: [10, 8],
-    "342d": [.5, .5],
-    "442d": [1, .5],
+    "342d": [0.5, 0.5],
+    "442d": [1, 0.5],
     "142d": [1, 1],
     353: [4.5, 5.5],
     453: [5, 5.5],
@@ -415,14 +424,14 @@ var quadrantCoords = {
     "430": [9, 7.5],
     112: [2, 0],
     "230": [8.5, 8],
-    "330d": [3.5, .5],
-    "430d": [4, .5],
+    "330d": [3.5, 0.5],
+    "430d": [4, 0.5],
     341: [2.5, 7.5],
     441: [3, 7.5],
     141: [3, 8],
     223: [9.5, 0],
-    "341d": [7.5, .5],
-    "441d": [8, .5],
+    "341d": [7.5, 0.5],
+    "441d": [8, 0.5],
     352: [3.5, 8.5],
     452: [4, 8.5],
     152: [4, 9],
@@ -433,7 +442,7 @@ var quadrantCoords = {
     463: [10, 8.5],
     163: [10, 9],
     263: [9.5, 9],
-    "463d": [2, .5],
+    "463d": [2, 0.5],
     "163d": [2, 1],
     356: [6.5, 7.5],
     474: [9, 9.5],
@@ -451,7 +460,7 @@ var quadrantCoords = {
     "470": [4, 6.5],
     116: [2, 9],
     216: [1.5, 9],
-    "316d": [9.5, .5],
+    "316d": [9.5, 0.5],
     "216d": [9.5, 1],
     337: [10.5, 9.5],
     437: [11, 9.5],
@@ -465,7 +474,7 @@ var quadrantCoords = {
     213: [5.5, 8],
     "340d": [3.5, 2.5],
     "440d": [8, 2.5],
-    351: [.5, 9.5],
+    351: [0.5, 9.5],
     451: [1, 9.5],
     151: [1, 10],
     224: [11.5, 7],
@@ -597,57 +606,49 @@ function listen(event, listener) {
 
 // TODO: Handle possible failure alert from content script.
 listen('replaySaved', function() {
-    console.log('Got message confirming data save.')
+    console.log('Got message confirming data save.');
     $(savedFeedback).fadeIn(300);
     $(savedFeedback).fadeOut(900);
 });
 
 
 // function to add button to record replay data AND if user has turned on key recording, add listener for that key.
-function recordButton() {
-    var recordButton = document.createElement("img")
-    recordButton.id = 'recordButton'
-    recordButton.src = 'http://i.imgur.com/oS1bPqR.png'
+function makeRecordButton() {
+    var recordButton = document.createElement("img");
+    recordButton.id = 'recordButton';
+    recordButton.src = 'http://i.imgur.com/oS1bPqR.png';
+    recordButton.style.cursor = "pointer";
     recordButton.onclick = function () {
-        saveReplayData(positions)
-    }
-    recordButton.style.position = "absolute"
-    recordButton.style.margin = "auto"
-    recordButton.style.right = "30px"
-    recordButton.style.top = "65px"
-    recordButton.style.cursor = "pointer"
-    $('body').append(recordButton)
+        saveReplayData(positions);
+    };
+    $('#sound').append(recordButton);
 
-    var savedFeedback = document.createElement('a')
-    savedFeedback.id = 'savedFeedback'
-    savedFeedback.textContent = 'Saved!'
-    savedFeedback.style.right = '20px'
-    savedFeedback.style.top = '100px'
-    savedFeedback.style.position = "absolute"
-    savedFeedback.style.color = '#00CC00'
-    savedFeedback.style.fontSize = '20px'
-    savedFeedback.style.fontWeight = 'bold'
-    $('body').append(savedFeedback)
-    $(savedFeedback).hide()
+    var savedFeedback = document.createElement('a');
+    savedFeedback.id = 'savedFeedback';
+    savedFeedback.textContent = 'Saved!';
+    savedFeedback.style.color = '#00CC00';
+    savedFeedback.style.fontSize = '20px';
+    savedFeedback.style.fontWeight = 'bold';
+    $('#recordButton').after(savedFeedback);
+    $(savedFeedback).hide();
 
     if (options.record_key_enabled) {
         $(document).on("keypress", function (e) {
             if (e.which == options.record_key) {
-                saveReplayData(positions)
+                saveReplayData(positions);
             }
-        })
+        });
     }
 }
 
-if(options.record && !options.treter) {
+if(options.record) {
     tagpro.ready(function() {
         var startInterval = setInterval(function() {
-            //console.log('map: '+(typeof tagpro.map == "undefined" ? 'undefined' : 'defined'))
-            //console.log('wallMap: '+(typeof tagpro.wallMap == "undefined" ? 'undefined' : 'defined'))
             if(tagpro.map && tagpro.wallMap) {
                 clearInterval(startInterval);
                 positions = {};
-                recordButton();
+                replayInfo = {};
+                makeRecordButton();
                 recordReplayData();
             }
         }, 1000);
