@@ -252,20 +252,19 @@ function recordReplayData() {
         for (var i = 0; i < message.length; i++) {
             var data = message[i].u;
 
-            if(data !== undefined) {
-                for(var j = 0; j < data.length; j++) {
-                    if(data[j].name && positions.players[data[j].id]) {
-                        var id = data[j].id;
-                        var nameInfo = {
-                            time: Date.now(),
-                            name: data[j].name,
-                            auth: data[j].auth,
-                            flair: data[j].flair
-                        };
-                        positions.players[id].nameInfo.push(nameInfo);
-                    }
+            if(data === undefined) return;
+            for(var j = 0; j < data.length; j++) {
+                if(data[j].name && positions.players[data[j].id]) {
+                    var id = data[j].id;
+                    var nameInfo = {
+                        time: Date.now(),
+                        name: data[j].name,
+                        auth: data[j].auth,
+                        flair: data[j].flair
+                    };
+                    positions.players[id].nameInfo.push(nameInfo);
                 }
-            }    
+            }
         }
     });
 
