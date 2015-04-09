@@ -106,8 +106,20 @@ function recordReplayData() {
     // ideally we would keep these and add them to the splats object, but there is no team indicator??
     delete positions.map.splats;
 
+
     // set up replay info data object
-    replayInfo.
+    replayInfo.mapName = $('#mapInfo').text().replace('Map: ', '').replace(/ by.*/, '');
+    replayInfo.fps = fps;
+    replayInfo.player = tagpro.playerId;
+    replayInfo.spectating = tagpro.spectator !== false;
+    
+    // the following properties will be updated after the data are sent to the background page
+    replayInfo.name = '';
+    replayInfo.duration = 0;
+    replayInfo.players = {};
+    replayInfo.rendered = false;
+    replayInfo.renderId = undefined;
+    replayInfo.dateRecorded = 0;
 
 
     
@@ -181,6 +193,12 @@ function recordReplayData() {
         for (var player in tagpro.players) {
             if (!positions.players[player]) {
                 positions.players[player] = {
+                    nameInfo: [{
+                        time: Date.now(),
+                        name: tagpro.players[player].name,
+                        auth: tagpro.players[player].auth,
+                        flair: tagpro.players[player].flair
+                    }],
                     angle: createZeroArray(saveDuration * fps),
                     auth: createZeroArray(saveDuration * fps),
                     bomb: createZeroArray(saveDuration * fps),
@@ -226,6 +244,30 @@ function recordReplayData() {
         positions.camera.shift();
         positions.camera.push({x: tagpro.players[tagpro.playerId].x, y: tagpro.players[tagpro.playerId].y});
     };
+
+    tagpro.socket.on('p', function(message){
+        if(!Array.isArray(message)) {
+            message = [message];
+        }
+        for (var i = 0; i < message.length; i++) {
+            var data = message[i].u;
+
+            if(data !== undefined) {
+                for(var j = 0; j < data.length; j++) {
+                    if(data[j].name && positions.players[data[j].id]) {
+                        var id = data[j].id;
+                        var nameInfo = {
+                            time: Date.now(),
+                            name: data[j].name,
+                            auth: data[j].auth,
+                            flair: data[j].flair
+                        };
+                        positions.players[id].nameInfo.push(nameInfo);
+                    }
+                }
+            }    
+        }
+    });
 
     thing = setInterval(saveGameData, 1000 / fps);
 }
