@@ -4,7 +4,7 @@ TagProReplays is a Chrome extension designed to enable users to record short cli
 
 This Chrome extension is meant to serve as a replacement for screen capture software like OBS for users that don't require all the features or whose computers take a performance hit when running both the game and the screen capture software at the same time.
 
-This project was initially authored by [Ballparts](https://github.com/ballparts), who may still pop in from time-to-time.
+This project was initially authored by [ballparts](https://github.com/ballparts), who may still pop in from time-to-time.
 
 ## Where do I get the extension?
 
